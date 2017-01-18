@@ -1,7 +1,7 @@
 rm(list=ls())
 library(rms); library(Hmisc)
 
-setwd("C:\\Users\\tomli\\Desktop\\Tom folder\\Chao\\Chao - 29Sep2016\\")
+setwd("")
 
 load("mortality_full_8.Rdata")
 # load("mortality_20160926_incident.Rdata")
