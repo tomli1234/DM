@@ -37,11 +37,18 @@ fm <- update(fm, ~. - cancer - stroke - chd - meds - ckd - pad)
 # SG available variables-----------------------------
 nk <- 4
 vars <- c("rcs(bmi, nk) + rcs(hba1c, nk) + rcs(age,4) + rcs(duration,4) + smoking + af + cancer + pad + stroke + chd + ckd + rcs(map, nk) + rcs(ldl, nk) + female")
-# vars <- c("rcs(hba1c, nk) + rcs(age,4) + af + cancer + pad + stroke + chd + ckd + rcs(map, nk) + rcs(sbp, nk) + rcs(dbp, nk) + rcs(ldl, nk) + female")
+# vars <- c("rcs(hba1c, nk) + rcs(age, 4) + af + cancer + pad + stroke + chd + ckd + rcs(map, nk) + rcs(sbp, nk) + rcs(dbp, nk) + rcs(ldl, nk) + female")
 vars <- gsub("nk", nk, vars)
 fm <- as.formula(paste("Surv(years, event) ~", vars))
 #-----------------------------------------------------
 
+
+# Stefan / SG available variables-----------------------------
+nk <- 4
+vars <- c("rcs(bmi, nk) + rcs(hba1c, nk) + rcs(age,4) + rcs(duration,4) + smoking + stroke + chd + rcs(map, nk) + rcs(lr, nk) + rcs(log.creatinine, nk) + female")
+vars <- gsub("nk", nk, vars)
+fm <- as.formula(paste("Surv(years, event) ~", vars))
+#-----------------------------------------------------
 completed <- d
 imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) 
 completed[names(imputed)] <- imputed
@@ -49,8 +56,8 @@ dd <<- datadist(completed); options(datadist ="dd")
 fullmodel <- fit.mult.impute(fm, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5) 
 ggplot(Predict(fullmodel), sepdiscrete ='vertical', nlevels=4, vnames ='names')
 plot(anova(fullmodel))
-
+ 
 # Save the model
 fullmodel$x <- NULL # remove raw data
 fullmodel$y <- NULL # remove raw data
-save(fullmodel, file="External validation\\SG_full_model.Rdata")
+save(fullmodel, file="SG_full_model.Rdata")
