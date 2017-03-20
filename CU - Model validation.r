@@ -89,12 +89,16 @@ p <- ggplot(dat.melt, aes(x = Deciles, y = Risk*100, color = Group)) +
 ggsave(p, file="validation_results.pdf")
 #-------------------------------------------------------------------------
 
-# stroke
-ukpds_score <- function(testdata){
-  q <- with(testdata, 0.00186* 1.092^(age.entry-55)* 0.7^(isFemale)* 1.547^(smoking)*
-	8.554^(af)* (1.122^(sbp-135.5))/10* 1.138^(lr-5.11))
-	1-exp(-q* 1.145^(testdata$duration)* (1-1.145^(5))/(1-1.145))
+# UKPDS
+FUN.stroke_ukpds <- function(period){
+d <- period
+d$smoking <- ifelse(d$smoking=="Yes", 1, 0) # No option for ex-smokers
+
+q <-0.00186* 1.092^(d$age_entry-55)* 0.7^(d$female)* 1.547^(d$smoking)*
+	8.554^(d$af)* 1.122^((d$sbp-135.5)/10)* 1.138^(d$lr-5.11)
+(1-exp(-q* 1.145^(d$duration)* (1-1.145^(5))/(1-1.145)))*100
 }
+
 
 # stroke
 CU_score <- function(testdata){
@@ -102,15 +106,16 @@ CU_score <- function(testdata){
 }
 
 
-# chd
-FUN.chd_ukpds<-function (d, hba1c, sbp, lr){
-d$smoking<-ifelse(d$smoking==1, 1, 0)
 
-q<-0.0112* 1.059^(d$age_entry-55)* 0.525^(d$female)* 1.35^(d$smoking)* 
-	1.183^(d[,c(hba1c)]-6.72)* 1.088^((d[,c(sbp)]-135.7)/10)* 
-	3.845^(log(d[,c(lr)])-1.59)
+FUN.chd_ukpds <- function(period){
+d <- period
+d$smoking <- ifelse(d$smoking=="Yes", 1, 0) # No option for ex-smokers
+
+q <-0.0112* 1.059^(d$age_entry-55)* 0.525^(d$female)* 1.35^(d$smoking)* 
+	1.183^(d$hba1c-6.72)* 1.088^((d$sbp-135.7)/10)* 3.845^(log(d$lr)-1.59)
 (1-exp(-q* 1.078^(d$duration)* (1-1.078^5)/(1-1.078)))*100
 }
+
 
 # chd
 FUN.chd_cuhk<-function (d, egfr, urine_acr, non_hdl){
