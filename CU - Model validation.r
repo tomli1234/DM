@@ -117,6 +117,7 @@ q <-0.0112* 1.059^(d$age_entry-55)* 0.525^(d$female)* 1.35^(d$smoking)*
 }
 
 
+# for non_hdl, use tc - hdl (total cholesterol - hdl cholesterol)
 # chd
 FUN.chd_cuhk<-function (d, egfr, urine_acr, non_hdl){
 names(d)[names(d)%in%egfr]<-"egfr"
