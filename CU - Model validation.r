@@ -88,3 +88,39 @@ p <- ggplot(dat.melt, aes(x = Deciles, y = Risk*100, color = Group)) +
 # Results output----------------------------------------------------------
 ggsave(p, file="validation_results.pdf")
 #-------------------------------------------------------------------------
+
+# stroke
+ukpds_score <- function(testdata){
+  q <- with(testdata, 0.00186* 1.092^(age.entry-55)* 0.7^(isFemale)* 1.547^(smoking)*
+	8.554^(af)* (1.122^(sbp-135.5))/10* 1.138^(lr-5.11))
+	1-exp(-q* 1.145^(testdata$duration)* (1-1.145^(5))/(1-1.145))
+}
+
+# stroke
+CU_score <- function(testdata){
+  with(testdata, 0.0634*age.entry + 0.0897*hba1c + 0.5314*log(acr, 10) + 0.5636*chd)
+}
+
+
+# chd
+FUN.chd_ukpds<-function (d, hba1c, sbp, lr){
+d$smoking<-ifelse(d$smoking==1, 1, 0)
+
+q<-0.0112* 1.059^(d$age_entry-55)* 0.525^(d$female)* 1.35^(d$smoking)* 
+	1.183^(d[,c(hba1c)]-6.72)* 1.088^((d[,c(sbp)]-135.7)/10)* 
+	3.845^(log(d[,c(lr)])-1.59)
+(1-exp(-q* 1.078^(d$duration)* (1-1.078^5)/(1-1.078)))*100
+}
+
+# chd
+FUN.chd_cuhk<-function (d, egfr, urine_acr, non_hdl){
+names(d)[names(d)%in%egfr]<-"egfr"
+names(d)[names(d)%in%urine_acr]<-"urine_acr"
+names(d)[names(d)%in%non_hdl]<-"non_hdl"
+
+q<-with(d, 0.0267*(age_entry) - 0.3536*(female) + 0.4373*(smoking) + 0.0403*(duration)
+	-0.4808*log10(egfr) + 0.1232 *log10(1+(urine_acr)) + 0.2644*(non_hdl))
+(1-0.9616^exp(0.9440*(q-0.7082)))*100
+}
+
+
