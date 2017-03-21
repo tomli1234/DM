@@ -6,6 +6,10 @@ rm(list=ls())
 
 setwd("C:\\Users\\tomli\\Desktop\\Tom folder\\Chao\\Chao - 29Sep2016\\External validation\\CU")
 
+wd_mortality <- "mortality_full_8.Rdata" # Mortality data
+wd_stroke <- "stroke_20170214.Rdata" # Stroke data
+wd_chd <- "chd_20170220.Rdata" # CHD data
+
 # Data--------------------------------------------------------------------------------------------
 data_manipulation <- function(d, imp) {
       d$event <- as.numeric(d$event)
@@ -51,7 +55,7 @@ CU_mortality <- function(testdata){
 # CU stroke
 CU_stroke <- function(testdata){
       pred_score <- with(testdata, 0.0634*age + 0.0897*hba1c + 0.5314*log(acr, 10) + 0.5636*chd)
-      pred_surv <- NULL
+      pred_surv <- 1-0.9707^exp(pred_score - 4.5674)
 
       return(list(pred_score = pred_score, pred_surv = pred_surv))
 }
@@ -67,20 +71,28 @@ CU_chd <- function (d){
       return(list(pred_score = pred_score, pred_surv = pred_surv))
 }
 
+CU_models <- list(mortality=CU_mortality, stroke=CU_stroke, chd=CU_chd)
+
 # UKPDS stroke
 UKPDS_stroke <- function(d){
       pred_score <- with(d, 0.00186* 1.092^(age-55)* 0.7^(female)* 1.547^(smoke_binary)*
             8.554^(af)* 1.122^((sbp-135.5)/10)* 1.138^(lr-5.11))
       pred_surv <- 1-exp(-pred_score* 1.145^(d$duration)* (1-1.145^(5))/(1-1.145))
+      
+      return(list(pred_score = pred_score, pred_surv = pred_surv))
+      
 }
 
 # UKPDS CHD
-UKPDS_CHD <- function(d){
+UKPDS_chd <- function(d){
       pred_score <- 0.0112* 1.059^(d$age-55)* 0.525^(d$female)* 1.35^(d$smoke_binary)* 
             1.183^(d$hba1c-6.72)* 1.088^((d$sbp-135.7)/10)* 3.845^(log(d$lr)-1.59)
       pred_surv <- 1-exp(-pred_score* 1.078^(d$duration)* (1-1.078^5)/(1-1.078))
+      return(list(pred_score = pred_score, pred_surv = pred_surv))
+      
 }
 
+UKPDS_models <- list(mortality=NULL, stroke=UKPDS_stroke, chd=UKPDS_chd)
 
 
 # C-index and calibration---------------------------------------------------------------------
@@ -102,28 +114,35 @@ FUN.deciles_mean_pred <- function(data) {
       data.frame(observed, pred = mean_pred, Deciles=1:10)
 }
 
-validation <- function(outcome) {
+validation <- function(outcome, CU_UKPDS) {
+      
+      if(CU_UKPDS == 'CU') {
+            model <- CU_models
+      } else if(CU_UKPDS == 'UKPDS'){
+            model <- UKPDS_models
+      }
       
       if(outcome == 'mortality') {
-            CU_score <- CU_mortality
-            load("mortality_full_8.Rdata") 
+            model_score <- model$mortality
+            load(wd_mortality) 
       } else if(outcome == 'stroke') {
-            CU_score <- CU_stroke
-            load("stroke_20170214.Rdata")
+            model_score <- model$stroke
+            load(wd_stroke) 
       } else if(outcome == 'chd') {
-            CU_score <- CU_chd
+            model_score <- model$chd
+            load(wd_chd) 
       }
       
       completed <- data_manipulation(d, imp)
       
       # Discrimination-------------------------------------------------------
-      completed$pred_score <- CU_score(completed)$pred_score
+      completed$pred_score <- model_score(completed)$pred_score
       score_result <- data.frame(pred_score=completed$pred_score, years=completed$years, event=completed$event)
       c_index <- c(survConcordance(Surv(years, event) ~ pred_score, score_result)$concordance)
       
       # Calibration----------------------------------------------------------
       # predicted survival at 5-years
-      completed$pred_surv <- CU_score(completed)$pred_surv
+      completed$pred_surv <- model_score(completed)$pred_surv
       
       dat <-FUN.deciles_mean_pred(completed)
       library(reshape2)
@@ -143,13 +162,20 @@ validation <- function(outcome) {
       			legend.title=element_blank(), 
       			legend.text = element_text(size = 12, face = "bold")) +
       		annotate("text",3,100*max(dat.melt$Risk),size=8,
-      			label=paste0("C-statistic: ",round(c_index,3)))
+      			label=paste0("C-statistic: ",round(c_index,3))) +
+                  ggtitle(paste0(outcome, ', ', CU_UKPDS))
       
       return(p)
 }
 
-validation('mortality')
-
+# Output------------------------------------------------------------------
+# outcome: 'chd', 'mortality', 'stroke'
+# CU_UKPDS: 'CU', 'UKPDS'
+validation(outcome = 'mortality', CU_UKPDS = 'CU')
+validation(outcome = 'stroke', CU_UKPDS = 'CU')
+validation(outcome = 'chd', CU_UKPDS = 'CU')
+validation(outcome = 'stroke', CU_UKPDS = 'UKPDS')
+validation(outcome = 'chd', CU_UKPDS = 'UKPDS')
 
 
 
