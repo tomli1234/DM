@@ -7,11 +7,14 @@ library(tidyverse)
 
 setwd("C:\\Users\\tomli\\Desktop\\DM")
 
-GDP_inflator <- read.csv('GDP_deflator_2014.csv') %>%
-      mutate(Year = rep(1973:2016, each = 4),
-             Quarter = rep(1:4, length(unique(Year))),
-             perc_change = as.numeric(paste0(perc_change)),
-             Time = 1:nrow(.)) 
+# GDP_inflator <- read.csv('GDP_deflator_2014.csv') %>%
+#       mutate(Year = rep(1973:2016, each = 4),
+#              Quarter = rep(1:4, length(unique(Year))),
+#              perc_change = as.numeric(paste0(perc_change)),
+#              Time = 1:nrow(.)) 
+
+GDP_inflator <- read.csv('GDP_deflator_2014_byYear.csv') %>%
+      mutate(Time = 1:nrow(.)) 
 
 plot(GDP_inflator_2014 ~ Time, data = GDP_inflator, type = 'l')
 
@@ -23,12 +26,12 @@ diff_perc_change <- function(x, y) {
 }
 
 x <- GDP_inflator$GDP_inflator_2014
-y <- x - x/2
+y <- 0.5*x 
 plot(x, type= 'l', ylim = c(0, 120))
 points(y, cex=0.5)
 
 # missing <- sample(1:length(y), length(y)-20)
-missing <- (1:length(y))[-c(1,50,100,150)]
+missing <- (1:length(y))[-c(43, 53)]
 y[missing] <- NA
 y[missing] <- mean(y, na.rm=TRUE)
 
@@ -38,10 +41,10 @@ missing <- missing[order(distance)]
 
 weight <- 1/(1+apply(sapply(1:length(x), function(x) x - not_missing), 2, function(x) min(abs(x))))
 
-for(k in 1:100) {
+for(k in 1:20) {
       for(i in missing) {
             iter <- 1
-            while(iter < 10) {
+            while(iter < 30) {
                   old_coint <- diff_perc_change(x, y)
                   y_i_old <- y[i]
                   y[i] <- rnorm(n = 1, mean = y[i], sd = 5)
@@ -52,6 +55,6 @@ for(k in 1:100) {
                   iter <- iter + 1
             }      
       } 
-      plot(x, type= 'l', ylim = c(0, 120))
+      plot(x, type= 'l')
       points(y, cex=0.5)
 }      
