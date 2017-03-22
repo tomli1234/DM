@@ -1,8 +1,10 @@
+# Assume that the % change is the same for the two quantities
+
 rm(list=ls())
 
 library(tidyverse)
 
-setwd("C:\\Users\\tomli\\Desktop\\Tom folder\\Chao\\Chao - 29Sep2016\\Spending")
+setwd("C:\\Users\\tomli\\Desktop\\DM")
 
 GDP_inflator <- read.csv('GDP_deflator_2014.csv') %>%
       mutate(Year = rep(1973:2016, each = 4),
