@@ -23,7 +23,7 @@ diff_perc_change <- function(x, y) {
 }
 
 x <- GDP_inflator$GDP_inflator_2014
-y <- x - rnorm(n = length(x), mean = 10, sd = 0.1)
+y <- x - x/2
 plot(x, type= 'l', ylim = c(0, 120))
 points(y, cex=0.5)
 
@@ -38,7 +38,7 @@ missing <- missing[order(distance)]
 
 weight <- 1/(1+apply(sapply(1:length(x), function(x) x - not_missing), 2, function(x) min(abs(x))))
 
-for(k in 1:30) {
+for(k in 1:100) {
       for(i in missing) {
             iter <- 1
             while(iter < 10) {
