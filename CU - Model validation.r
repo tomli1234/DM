@@ -114,14 +114,16 @@ FUN.deciles_mean_pred <- function(data) {
       data.frame(observed, pred = mean_pred, Deciles=1:10)
 }
 
-validation <- function(outcome, CU_UKPDS) {
+validation <- function(outcome, CU_UKPDS, sex) {
       
+      # Select CU/UKPDS model
       if(CU_UKPDS == 'CU') {
             model <- CU_models
       } else if(CU_UKPDS == 'UKPDS'){
             model <- UKPDS_models
       }
       
+      # Select outcome
       if(outcome == 'mortality') {
             model_score <- model$mortality
             load(wd_mortality) 
@@ -134,16 +136,24 @@ validation <- function(outcome, CU_UKPDS) {
       }
       
       completed <- data_manipulation(d, imp)
+      completed$pred_score <- model_score(completed)$pred_score
+      completed$pred_surv <- model_score(completed)$pred_surv
+      
+      # Select sex
+      if(sex == 'Female') {
+            completed <- completed[completed$female == 1, ]
+      } else if(sex == 'Male') {
+            completed <- completed[completed$female == 0, ]
+      } else if(sex == 'All') {
+            
+      }    
       
       # Discrimination-------------------------------------------------------
-      completed$pred_score <- model_score(completed)$pred_score
       score_result <- data.frame(pred_score=completed$pred_score, years=completed$years, event=completed$event)
       c_index <- c(survConcordance(Surv(years, event) ~ pred_score, score_result)$concordance)
       
       # Calibration----------------------------------------------------------
       # predicted survival at 5-years
-      completed$pred_surv <- model_score(completed)$pred_surv
-      
       dat <-FUN.deciles_mean_pred(completed)
       library(reshape2)
       dat.melt <- melt(dat, id.vars = 'Deciles', variable.name = 'Group', value.name = 'Risk')
@@ -165,17 +175,34 @@ validation <- function(outcome, CU_UKPDS) {
       			label=paste0("C-statistic: ",round(c_index,3))) +
                   ggtitle(paste0(outcome, ', ', CU_UKPDS))
       
-      return(p)
+      return(list(c_index = c_index, figure = p))
 }
 
 # Output------------------------------------------------------------------
 # outcome: 'chd', 'mortality', 'stroke'
 # CU_UKPDS: 'CU', 'UKPDS'
-validation(outcome = 'mortality', CU_UKPDS = 'CU')
-validation(outcome = 'stroke', CU_UKPDS = 'CU')
-validation(outcome = 'chd', CU_UKPDS = 'CU')
-validation(outcome = 'stroke', CU_UKPDS = 'UKPDS')
-validation(outcome = 'chd', CU_UKPDS = 'UKPDS')
+# sex: 'Female', 'Male', 'All' 
+validation(outcome = 'mortality', CU_UKPDS = 'CU', sex = 'Male')$figure
+validation(outcome = 'stroke', CU_UKPDS = 'CU', sex = 'Male')$figure
+validation(outcome = 'chd', CU_UKPDS = 'CU', sex = 'Male')$figure
+validation(outcome = 'stroke', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
+validation(outcome = 'chd', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
+
+# Table of c index
+c_index_all <- expand.grid(outcome = c('mortality','stroke','chd'), 
+                           CU_UKPDS = c('CU','UKPDS'), 
+                           sex = c('Male','Female','All')) %>%
+      
+                  filter(! (outcome == 'mortality' & CU_UKPDS == 'UKPDS')) %>%
+      
+                  mutate(c_index = apply(., 1, function(x) validation(x[1],x[2],x[3])$c_index))
+
+c_index_all %>%
+      ggplot(aes(x = outcome, y = c_index, fill = CU_UKPDS)) +
+            geom_bar(stat= 'identity', position = 'dodge', width = 0.5) +
+            facet_grid(. ~ sex)
+
+
 
 
 
