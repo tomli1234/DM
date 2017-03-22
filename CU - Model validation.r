@@ -197,12 +197,14 @@ c_index_all <- expand.grid(outcome = c('mortality','stroke','chd'),
       
                   mutate(c_index = apply(., 1, function(x) validation(x[1],x[2],x[3])$c_index))
 
+write.csv(c_index_all, 'c_index_all.csv')
+
 c_index_all %>%
       ggplot(aes(x = outcome, y = c_index, fill = CU_UKPDS)) +
             geom_bar(stat= 'identity', position = 'dodge', width = 0.5) +
             facet_grid(. ~ sex)
 
-
+ggsave("c_index_all.pdf")
 
 
 
