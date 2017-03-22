@@ -26,9 +26,7 @@ diff_perc_change <- function(x, y) {
 }
 
 x <- GDP_inflator$GDP_inflator_2014
-y <- 0.5*x 
-plot(x, type= 'l', ylim = c(0, 120))
-points(y, cex=0.5)
+y <- x - 30
 
 # missing <- sample(1:length(y), length(y)-20)
 missing <- (1:length(y))[-c(43, 53)]
@@ -55,6 +53,7 @@ for(k in 1:20) {
                   iter <- iter + 1
             }      
       } 
-      plot(x, type= 'l')
-      points(y, cex=0.5)
+      plot(y = x, x = GDP_inflator$Year, type= 'l')
+      points(y = y, x = GDP_inflator$Year, cex=0.5)
+      points(x = GDP_inflator$Year[not_missing], y = y[not_missing], cex=0.5, col = 2)
 }      
