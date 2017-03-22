@@ -1,3 +1,4 @@
+# A script for smoothing price using GDP deflator
 # Assume that the % change is the same for the two quantities
 
 rm(list=ls())
@@ -37,7 +38,7 @@ missing <- missing[order(distance)]
 
 weight <- 1/(1+apply(sapply(1:length(x), function(x) x - not_missing), 2, function(x) min(abs(x))))
 
-for(k in 1:15) {
+for(k in 1:30) {
       for(i in missing) {
             iter <- 1
             while(iter < 10) {
@@ -50,9 +51,7 @@ for(k in 1:15) {
                   }
                   iter <- iter + 1
             }      
-            print(c(k, i))
-            plot(x, type= 'l', ylim = c(0, 120))
-            points(y, cex=0.5)
-            Sys.sleep(0.1)
       } 
+      plot(x, type= 'l', ylim = c(0, 120))
+      points(y, cex=0.5)
 }      
