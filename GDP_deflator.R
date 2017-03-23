@@ -4,56 +4,96 @@
 rm(list=ls())
 
 library(tidyverse)
+library(reshape2)
+library(parallel)
+
 
 setwd("C:\\Users\\tomli\\Desktop\\DM")
 
-# GDP_inflator <- read.csv('GDP_deflator_2014.csv') %>%
-#       mutate(Year = rep(1973:2016, each = 4),
-#              Quarter = rep(1:4, length(unique(Year))),
-#              perc_change = as.numeric(paste0(perc_change)),
-#              Time = 1:nrow(.)) 
 
-GDP_inflator <- read.csv('GDP_deflator_2014_byYear.csv') %>%
+GDP_deflator <- read.csv('GDP_deflator_2014_byYear.csv') %>%
       mutate(Time = 1:nrow(.)) 
 
-plot(GDP_inflator_2014 ~ Time, data = GDP_inflator, type = 'l')
+HA_cost <- read.csv('HA cost.csv') %>%
+      rename('2003' = X2003,
+             '2013' = X2013) %>%
+      melt(id = 'Service') %>%
+      rename(Year = variable,
+             cost = value)
 
-# Cointegrated time series----------------------------
-diff_perc_change <- function(x, y) {
-      sum1 <- sum(weight[-length(x)]^2 * abs(diff(x)/x[-length(x)] - diff(y)/y[-length(y)]))
-      sum2 <- sum(weight[-1]^2 * abs(diff(x)/x[-1] - diff(y)/y[-1]))
+# Calculate difference in slope
+diff_perc_change <- function(x, y, weight) {
+      sum1 <- sum(weight[-length(x)]^0.1 * abs(diff(x)/x[-length(x)] - diff(y)/y[-length(y)]))
+      sum2 <- sum(weight[-1]^0.1 * abs(diff(x)/x[-1] - diff(y)/y[-1]))
       mean(c(sum1, sum2))
 }
 
-x <- GDP_inflator$GDP_inflator_2014
-y <- x - 30
+# Algorithm to impute missing value based on the slopes-------------------------
+smooth <- function(service) {
+      library(tidyverse)
+      
+      x <- GDP_deflator$GDP
+      y <- numeric(nrow(GDP_deflator))
+      y[c(43,53)] <- HA_cost %>%
+                        filter(Service == service) %>%
+                        select(cost) %>%
+                        unlist()
+      
+      missing <- (1:length(y))[-c(43, 53)]
+      y[missing] <- NA
+      y[missing] <- mean(y, na.rm=TRUE)
+      
+      not_missing <- (1:length(y))[-missing]
+      distance <- apply(sapply(missing, function(x) x - not_missing), 2, function(x) min(abs(x)))
+      missing <- missing[order(distance)]
+      
+      weight <- 1/(1+apply(sapply(1:length(x), function(x) x - not_missing), 2, function(x) min(abs(x))))
+      
+      for(k in 1:100) {
+            for(i in missing) {
+                  iter <- 1
+                  while(iter < 30) {
+                        old_coint <- diff_perc_change(x, y, weight)
+                        y_i_old <- y[i]
+                        y[i] <- rnorm(n = 1, mean = y[i], sd = mean(y)/10)
+                        eps <- diff_perc_change(x, y, weight) - old_coint
+                        if(eps > 0) {
+                              y[i] <- y_i_old
+                        }
+                        iter <- iter + 1
+                  }      
+            } 
+      }      
+      output <- data.frame(y) %>%
+            mutate(Year = GDP_deflator$Year,
+                   Service = service) %>%
+            rename(cost = y)
+      
+      return(output)
+}
 
-# missing <- sample(1:length(y), length(y)-20)
-missing <- (1:length(y))[-c(43, 53)]
-y[missing] <- NA
-y[missing] <- mean(y, na.rm=TRUE)
+# no_cores <- detectCores() - 1
+# cl <- makeCluster(no_cores)
+# clusterExport(cl, list("smooth","HA_cost","GDP_deflator","diff_perc_change"),envir = .GlobalEnv)
+# smooth_cost <- parLapply(cl, unique(HA_cost$Service), smooth)
+# smooth_cost <- Reduce(rbind, smooth_cost)
 
-not_missing <- (1:length(y))[-missing]
-distance <- apply(sapply(missing, function(x) x - not_missing), 2, function(x) min(abs(x)))
-missing <- missing[order(distance)]
+# Figure to compare the two trends---------------------------------------------------------
+figure <- function(service) {
+      y <- smooth_cost %>%
+                  filter(Service == service) %>%
+                  select(cost) %>%
+                  as.matrix()
+      plot(GDP ~ Year, data = GDP_deflator, type= 'l', xaxt="n", ylab = 'GDP', xlab = 'Year', main = service)
+      legend(x = 1970, y = 2000000, legend = c('GDP',paste0('Estimated cost for ', service)), 
+             lty = c(1, 0), 
+             pch = c(-1, 1),
+             col = c(1,2))
+      par(new= TRUE)
+      plot(y = y, x = GDP_deflator$Year, cex=1, yaxt="n",xaxt="n", ylab = "", xlab = '', col = 2)
+      abline(v = c(2003, 2013))
+      axis(side = 4, col = 2)
+      mtext(side = 1, at = c(1960, 1980, 2003, 2013), text = c(1960, 1980, 2003, 2013), padj = 1)
+}
 
-weight <- 1/(1+apply(sapply(1:length(x), function(x) x - not_missing), 2, function(x) min(abs(x))))
-
-for(k in 1:20) {
-      for(i in missing) {
-            iter <- 1
-            while(iter < 30) {
-                  old_coint <- diff_perc_change(x, y)
-                  y_i_old <- y[i]
-                  y[i] <- rnorm(n = 1, mean = y[i], sd = 5)
-                  eps <- diff_perc_change(x, y) - old_coint
-                  if(eps > 0) {
-                        y[i] <- y_i_old
-                  }
-                  iter <- iter + 1
-            }      
-      } 
-      plot(y = x, x = GDP_inflator$Year, type= 'l')
-      points(y = y, x = GDP_inflator$Year, cex=0.5)
-      points(x = GDP_inflator$Year[not_missing], y = y[not_missing], cex=0.5, col = 2)
-}      
+# write.csv(smooth_cost, 'smooth_cost.csv')

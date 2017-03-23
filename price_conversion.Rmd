@@ -1,0 +1,21 @@
+---
+title: "Price conversion"
+author: "Tom"
+date: "March 23, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+source('C:\\Users\\tomli\\Desktop\\DM\\GDP_deflator.R')
+smooth_cost <- read.csv('C:\\Users\\tomli\\Desktop\\DM\\smooth_cost.csv')
+```
+
+### Estimating different HA costs based on values on 2003 and 2013 and the GDP trend
+
+```{r echo=FALSE, results="hide", fig.cap="", dpi = 1280, fig.width = 10, fig.height = 10}
+for(i in unique(HA_cost$Service)) {
+      figure(i)
+}
+```
