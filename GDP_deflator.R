@@ -70,7 +70,8 @@ smooth <- function(service) {
       
       d1 <- diff(x[c(43, 53)])
       d2 <- diff(y[c(43, 53)])
-      y <- d2/d1 * x/x[43] * y[43]
+      y0 <- y[43]
+      y <- d2/d1 * (x - x[43]) + y0
       
       output <- data.frame(y) %>%
             mutate(Year = GDP_deflator$Year,
@@ -79,7 +80,7 @@ smooth <- function(service) {
       
       return(output)
 }
-# 
+
 # no_cores <- detectCores() - 1
 # cl <- makeCluster(no_cores)
 # clusterExport(cl, list("smooth","HA_cost","GDP_deflator","diff_perc_change"),envir = .GlobalEnv)
