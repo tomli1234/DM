@@ -15,6 +15,7 @@ d$years <- d$time / 365.25
 units(d$years) <- "year"
 label(d$years) <- "Survival Time"
 
+# Model development-------------------------------------------------------------------------------------------------------
 # imputing missing data
 completed <- d
 imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) 
@@ -59,14 +60,14 @@ FUN.approx <- function(mod, completedata) {
     frac[i] <- fapprox$stats[3]/fullchisq
   }
   plot(r2, frac, type="b")
-  list(r2, frac)
+  list(r2, frac, row.names(s[[1]]))
 }
 
 # figure 2 - r^2 approximation
 r <- FUN.approx(fullmodel, completed)
-tab <- cbind(sort(r[[2]]), 1:length(r[[2]]))
-tab
-write.csv(tab, "table_r2.csv")
+# tab <- cbind(sort(r[[2]]), 1:length(r[[2]]))
+# tab
+# write.csv(tab, "table_r2.csv")
 
 # 5-year risk prediction
 # if we want to predict 10-year risk, change times=5 to times=10.
@@ -77,7 +78,9 @@ table(completed$event)
 # table(completed$event)
 # if above annotation code is executed, c-statistics for each group is slightly larger.
 
- # validate function (bootstrap) ====
+
+# Model Validation----------------------------------------------------------------------------------------
+# For full model
 FunDiscrimination <- function (model, bootstrap) {
   set.seed (10)
   v <- validate (model, B=bootstrap)
@@ -87,17 +90,40 @@ FunDiscrimination <- function (model, bootstrap) {
   print(paste("C-statistic =", round(c.stat, 4)))
   c.stat
 }
+FunDiscrimination(fullmodel, 3)
 
-row <- list()
-row[[1]] <- c("", "Male", "Female")
-row[[2]] <- c("Bootstrap", "", "")
-row[[3]] <- c("Model", FunDiscrimination(model.male, 20), FunDiscrimination(model.female, 20))
-# Full model
-row[[4]] <- c("Full model", FunDiscrimination(fullmodel.male, 20), FunDiscrimination(fullmodel.female, 20))
-do.call(rbind, row)
+# For the approximate model
+Cindex_approx <- function(number_boostrap){
+	c_index <- NULL
+	for(i in 1:number_boostrap){
+		# Bootstrap sampling
+		boostrap_sample <- completed[sample(1:nrow(completed), nrow(completed), replace = TRUE), ]
+		boostrap_fullmodel <- cph(fm, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+		r <- FUN.approx(boostrap_fullmodel, boostrap_sample)
+
+		# Select variables that makes up 90% of R2
+		cutoff <- max(which(r[[1]]>0.9))
+		term_remove <- paste0(r[[3]][1:cutoff], collapse = '|')
+		fm_terms <- terms(fm)
+		term_remove_index <- grep(term_remove, attr(fm_terms, 'term.labels'))
+
+		# Fit the approximate model
+		approx_model <- cph(fm_approx, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+
+		# Calculate the C-index
+		completed$pred <- predict(approx_model, newdata=completed)
+		score_result <- data.frame(pred=completed$pred, years=completed$years, event=completed$event)
+		c_index <- c(c_index, c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance))
+	}
+	return(c_index)
+}
 
 
-print(cat("c-stat=", cstat(completed), "\nfemale=", cstat_female(completed), "\nmale=", cstat_male(completed), "\n"))
+
+
+
+
+
 
 source("B2_run_calibration.R")
 
