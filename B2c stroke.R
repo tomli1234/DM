@@ -106,6 +106,7 @@ Cindex_approx <- function(number_boostrap){
 		term_remove <- paste0(r[[3]][1:cutoff], collapse = '|')
 		fm_terms <- terms(fm)
 		term_remove_index <- grep(term_remove, attr(fm_terms, 'term.labels'))
+		fm_approx <- drop.terms(fm_terms, term_remove_index, keep.response = TRUE)
 
 		# Fit the approximate model
 		approx_model <- cph(fm_approx, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
@@ -118,6 +119,7 @@ Cindex_approx <- function(number_boostrap){
 	return(c_index)
 }
 
+Cindex_approx(3)
 
 
 
