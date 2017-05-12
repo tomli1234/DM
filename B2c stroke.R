@@ -1,6 +1,4 @@
-#----------------------------------------------
-# Model for stroke
-#-----------------------------------------------
+rm(list = ls())
 
 library(rms)
 library(Hmisc)
@@ -8,27 +6,35 @@ library(pec)
 library(prodlim)
 library(reshape2)
 
-load("vfm/stroke_t2_3.Rdata")
+#----------------------------------------------
+# Model for stroke
+#-----------------------------------------------
+load("vfm/stroke_h_t2_3.Rdata")
+
 imp$formula; imp$call
 d$event <- as.numeric(d$event)
+d$event <- d$event-1
+# Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.
+
 d$years <- d$time / 365.25
 units(d$years) <- "year"
 label(d$years) <- "Survival Time"
 
+
 # Model development-------------------------------------------------------------------------------------------------------
+
+# (1) full model predictors for stroke, no interaction terms 
+vars <- c("rcs(age, nk) + rcs(duration, nk) + rcs(log.urine_acr, nk) + rcs(bmi, nk) + rcs(haemoglobin, nk) + rcs(wbc, nk) + rcs(pulse, nk) + rcs(lr, nk) + rcs(hba1c, nk) + rcs(log.creatinine, nk) + rcs(map, nk) + rcs(triglyceride, nk) + smoking + af + cancer + pad + ckd + meds + complications + female + chd + rcs(sbp, nk) + rcs(dbp, nk) + rcs(ldl, nk) + rcs(hdl, nk) + rcs(tc, nk) + rcs(log.egfr_chinese, nk)")
+
+
 # imputing missing data
 completed <- d
 imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) 
 completed[names(imputed)] <- imputed
-# Since d$event and completed$event have two status, i.e., 
-# 1 (censored indication) and 2 (event indication), 
-# transform it to 0 and 1 status as usual.
-completed$event <- completed$event-1
-d$event <- d$event-1
+
 dd <<- datadist(completed); options(datadist ="dd")
 
-# (1) full model predictors for stroke, no interaction terms 
-vars <- c("rcs(age, nk) + rcs(duration, nk) + rcs(log.urine_acr, nk) + rcs(bmi, nk) + rcs(haemoglobin, nk) + rcs(wbc, nk) + rcs(pulse, nk) + rcs(lr, nk) + rcs(hba1c, nk) + rcs(log.creatinine, nk) + rcs(map, nk) + rcs(triglyceride, nk) + smoking + af + cancer + pad + ckd + meds + complications + female + chd + rcs(sbp, nk) + rcs(dbp, nk) + rcs(ldl, nk) + rcs(hdl, nk) + rcs(tc, nk) + rcs(log.egfr_chinese, nk)")
+
 nk <- 4
 vars <- gsub("nk", nk, vars)
 fm <- as.formula(paste("Surv(years, event) ~", vars))
@@ -60,13 +66,13 @@ FUN.approx <- function(mod, completedata) {
     frac[i] <- fapprox$stats[3]/fullchisq
   }
   plot(r2, frac, type="b")
-  list(r2, frac, row.names(s[[1]]))
+  list(c(1, r2), c(1, frac), row.names(s[[1]]))
 }
 
 # figure 2 - r^2 approximation
 r <- FUN.approx(fullmodel, completed)
-# tab <- cbind(sort(r[[2]]), 1:length(r[[2]]))
-# tab
+tab <- cbind(number=(length(r[[2]])+1):1, frac=c(1, r[[1]]),  predictor=r[[3]])
+tab
 # write.csv(tab, "table_r2.csv")
 
 # 5-year risk prediction
@@ -90,7 +96,7 @@ FunDiscrimination <- function (model, bootstrap) {
   print(paste("C-statistic =", round(c.stat, 4)))
   c.stat
 }
-FunDiscrimination(fullmodel, 3)
+c.stat <- FunDiscrimination(fullmodel, 3)
 
 # For the approximate model
 Cindex_approx <- function(number_boostrap){
@@ -116,14 +122,16 @@ Cindex_approx <- function(number_boostrap){
 		score_result <- data.frame(pred=completed$pred, years=completed$years, event=completed$event)
 		c_index <- c(c_index, c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance))
 	}
+	fm_terms <<- fm_terms
+	fm_approx <<- fm_approx
+	term_remove <<- term_remove
+	approx_model <<- approx_model
 	return(c_index)
 }
-
-Cindex_approx(3)
-
-
-
-
+c_index <- Cindex_approx(2)
+mean(c_index)
+approx_model$call
+formula(fm_approx)
 
 
 
