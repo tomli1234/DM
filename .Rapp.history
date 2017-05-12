@@ -1,0 +1,10 @@
+rm(list = ls())
+library(rms)#
+library(Hmisc)#
+library(pec)#
+library(prodlim)#
+library(reshape2)#
+#
+#----------------------------------------------#
+# Model for stroke#
+#-----------------------------------------------
