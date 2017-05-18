@@ -19,33 +19,21 @@ library(prodlim)
 library(reshape2)
 ```
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
 **Bootstrap = 3**
 
-### (1) Full model predictors for stroke, no interaction terms 
-```{r fullmodeldevelopment, include = FALSE}
-d$event <- as.numeric(d$event)
-d$event <- d$event-1
-# Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.
-d$years <- d$time / 365.25
-units(d$years) <- "year"
-label(d$years) <- "Survival Time"
-
+#### (1) Full Model 
+```{r fullmodel development, include = FALSE}
 # Model development 
 # imputing missing data
 completed <- d
 imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) 
 completed[names(imputed)] <- imputed
 dd <<- datadist(completed); options(datadist ="dd")
-nk <- 4
-vars <- gsub("nk", nk, vars)
-fm <- as.formula(paste("Surv(years, event) ~", vars))
+
 fullmodel <- fit.mult.impute(fm, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
 ```
 
-
-```{r fullmodelplots}
+```{r fullmodel plots}
 # estimation curve for variable
 ggplot(Predict(fullmodel), sepdiscrete ='vertical', nlevels=4, vnames ='names')
 # estimation result
@@ -148,12 +136,14 @@ p2 <- plot_female(dat.melt)
 multiplot(p1, p2, cols = 1)
 ```
 
-### (2) Age x Duration interaction 
-Not run
-
-```{r age_duration_interact, eval = FALSE}
-fm <- update(fm, ~. -rcs(age, 4) -rcs(duration, 4) + rcs(age, 4)*rcs(duration, 4))
-model_interaction <- fit.mult.impute(fm, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+#### (2) Age interaction 
+**Age interaction**
+``` {r age interaction, eval = TRUE}
+z <- predict(fullmodel, type="terms")
+z.age <- z[, "age"]
+z.other <- subset(z, select=-age)
+f.ia <- cph(fullmodel$y ~ z.age * z.other)
+anova(f.ia )
 ```
 
 ```{r, ref.label='validation', warning = FALSE, eval = FALSE}
@@ -162,14 +152,14 @@ model_interaction <- fit.mult.impute(fm, fitter = cph, xtrans = imp, data = d, x
 ```{r, ref.label='calibration', warning = FALSE, eval = FALSE}
 ```
 
-### (3) Simplified model 
+#### (3) Simplified model 
 **Model approximation** 
-  Set at 90% of r^2
+  Set at 90% of R^2^
 
 ```{r modelapprox, warning = FALSE, message = FALSE}
 FUN.approx <- function(mod, completedata) {
   lp <- predict(mod)
-  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)
+  a <- ols(as.formula(paste0("lp ~ ", paste(labels(terms(fm)), collapse = "+"))), sigma=1, data=completedata)
   s <- fastbw(a, aic=1000000)
   betas <- s$Coefficients
   X <- model.matrix(fm, data=completedata)
@@ -187,9 +177,8 @@ FUN.approx <- function(mod, completedata) {
 }
 # figure 2 - r^2 approximation
 r <- FUN.approx(fullmodel, completed)
-r
 plot(r$r2, r$frac, type="b", ylab="Fraction", xlab=expression(r^2))
-tab <- cbind(number=(length(r[[2]])):1, frac=c(r[[1]]),  predictor=r[[3]])
+tab <- cbind(number=(length(r[[2]])):1, frac=c(r[[1]]), predictor=r[[3]])
 tab
 # write.csv(tab, "table_r2.csv")
 
@@ -217,19 +206,24 @@ Cindex_approx <- function(number_bootstrap){
     score_result <- data.frame(pred=completed$pred, years=completed$years, event=completed$event)
     c_index <- c(c_index, c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance))
   }
-  print(c_index)
-  c_index
+  fm_terms <<- fm_terms
+	fm_approx <<- fm_approx
+	term_remove <<- term_remove
+	approx_model <<- approx_model
+	print(c_index)
+	c_index
 }
 c_index <- Cindex_approx(3)
-# approx_model$call
-model <- approx_model
-# model <- fit.mult.impute(fm_approx, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
 ```
 Mean c-index = `r round(mean(c_index), 4)`
 
 Approx model formula is: 
 ```{r}
 formula(fm_approx)
+approx_model
+
+# save approx model
+# model <- fit.mult.impute(fm_approx, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
 ```
 
 ```{r, ref.label='calibration', warning = FALSE}
