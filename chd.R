@@ -2,7 +2,6 @@
  load("E:/vfm/CHD_t2_5.Rdata"); folder <- "CHD/t2 dm"
 # load("E:/vfm/CHD_20170320_5.Rdata"); folder <- "CHD/all dm"
 
-setwd(paste0("C:/Users/Chao/Dropbox (Personal)/Diabetes/Results/", folder))
 d$event <- as.numeric(d$event)-1
 # Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.
 d$years <- d$time / 365.25
@@ -14,47 +13,65 @@ fm1 <- fm
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "all predictors")), output_file=paste(folder, "CHD.html"))
 
 # change egfr_chinese, creatinine (+/-urine acr)
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
 fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "creatinine")), output_file=paste(folder, "creatinine.html"))
 
-fm <- update(fm1, ~. -rcs(creatinine, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.creatinine, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "egfr")), output_file=paste(folder, "egfr.html"))
 
-fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(creatinine, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(log.creatinine, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "uacr")), output_file=paste(folder, "uacr.html"))
 
-fm <- update(fm1, ~. -rcs(creatinine, 4) -rcs(log.urine_acr, 4) )
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.creatinine, 4) -rcs(log.urine_acr, 4) )
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "no uacr")), output_file=paste(folder, "no_uacr.html"))
 
 # change sbp, dbp, map
-fm <- update(fm, ~. -rcs(creatinine, 4) -rcs(dbp, 4) -rcs(map, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(dbp, 4) -rcs(map, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "sbp")), output_file=paste(folder, "sbp.html"))
 
-fm <- update(fm, ~. -rcs(creatinine, 4) -rcs(sbp, 4) -rcs(map, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(sbp, 4) -rcs(map, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "dbp")), output_file=paste(folder, "dbp.html"))
 
-fm <- update(fm, ~. -rcs(creatinine, 4) -rcs(sbp, 4) -rcs(dbp, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(sbp, 4) -rcs(dbp, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "map")), output_file=paste(folder, "map.html"))
 
 # change lr, ldl, hdl, tc
-fm <- update(fm, ~. -rcs(creatinine, 4) -rcs(dbp, 4) -rcs(map, 4) -rcs(hdl, 4) -rcs(ldl, 4) -rcs(tc, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(sbp, 4) -rcs(map, 4) -rcs(hdl, 4) -rcs(ldl, 4) -rcs(tc, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "lr")), output_file=paste(folder, "lr.html"))
 
-fm <- update(fm, ~. -rcs(creatinine, 4) -rcs(dbp, 4) -rcs(map, 4) -rcs(lr, 4) -rcs(ldl, 4) -rcs(tc, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(sbp, 4) -rcs(map, 4) -rcs(lr, 4) -rcs(ldl, 4) -rcs(tc, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "hdl")), output_file=paste(folder, "hdl.html"))
 
-fm <- update(fm, ~. -rcs(creatinine, 4) -rcs(dbp, 4) -rcs(map, 4) -rcs(lr) -rcs(hdl, 4) -rcs(tc, 4))
-rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "hdl")), output_file=paste(folder, "ldl.html"))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(sbp, 4) -rcs(map, 4) -rcs(lr, 4) -rcs(hdl, 4) -rcs(tc, 4))
+rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "ldl")), output_file=paste(folder, "ldl.html"))
 
-fm <- update(fm, ~. -rcs(creatinine, 4) -rcs(dbp, 4) -rcs(map, 4) -rcs(lr) -rcs(hdl, 4) -rcs(ldl, 4))
+rm(list=setdiff(ls(), c("d", "imp", "fm1", "folder")))
+fm <- update(fm1, ~. -rcs(log.egfr_chinese, 4) -rcs(dbp, 4) -rcs(map, 4) -rcs(lr, 4) -rcs(hdl, 4) -rcs(ldl, 4))
 rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "tc")), output_file=paste(folder, "tc.html"))
 
 
 # Interactions (full model)
 fm <- as.formula(Surv(years, event) ~ rcs(age, 4)*rcs(duration, 4) + rcs(log.urine_acr, 4)*rcs(age, 4) + rcs(bmi, 4)*rcs(age, 4) + rcs(haemoglobin, 4)*rcs(age, 4) + rcs(wbc, 4)*rcs(age, 4) + rcs(pulse, 4)*rcs(age, 4) + rcs(lr, 4)*rcs(age, 4) + rcs(hba1c, 4)*rcs(age, 4) + rcs(log.creatinine, 4)*rcs(age, 4) + rcs(map, 4)*rcs(age, 4) + rcs(triglyceride, 4)*rcs(age, 4) + smoking + af + cancer + pad + ckd + meds + complications + female + stroke + rcs(sbp, 4)*rcs(age, 4) + rcs(dbp, 4)*rcs(age, 4) + rcs(ldl, 4)*rcs(age, 4) + rcs(hdl, 4)*rcs(age, 4) + rcs(tc, 4)*rcs(age, 4) + rcs(log.egfr_chinese, 4))
 
+rmarkdown::render("C:/Users/Chao/Documents/GitHub/DM/input.Rmd", params=list(set_title=paste(folder, "interactions(full model)")), output_file=paste(folder, "interactions.html"))
+
 # Interactions (simplified model)
-fm <- as.formula(Surv(years, event) ~ rcs(age, 4)*rcs(duration, 4) + rcs(age, 4)*rcs(log.urine_acr, 4) + rcs(age, 4)*rcs(haemoglobin, 4) + rcs(age, 4)*female)
+completed <- d
+imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) 
+completed[names(imputed)] <- imputed
+dd <<- datadist(completed); options(datadist ="dd")
+
+fm <- as.formula(Surv(years, event) ~ rcs(age, 4)*rcs(duration, 4) + rcs(age, 4)*rcs(log.urine_acr, 4) + rcs(age, 4)*female)
 
 FunDiscrimination <- function (model, bootstrap) {
   set.seed (10)

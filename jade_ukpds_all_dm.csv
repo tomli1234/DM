@@ -1,0 +1,16 @@
+"","outcome","CU_UKPDS","sex","c_index"
+"1","mortality","CU","Male",0.791088085973941
+"6","mortality","CU","Female",0.81316975488309
+"11","mortality","CU","All",0.802348400127133
+"2","stroke","CU","Male",0.719362769279309
+"4","stroke","UKPDS","Male",0.691535561863891
+"7","stroke","CU","Female",0.756040449384396
+"9","stroke","UKPDS","Female",0.72981202074886
+"12","stroke","CU","All",0.729824677470275
+"14","stroke","UKPDS","All",0.71103710557882
+"3","chd","CU","Male",0.647366836259437
+"5","chd","UKPDS","Male",0.614328341167261
+"8","chd","CU","Female",0.728899590949919
+"10","chd","UKPDS","Female",0.687792204222778
+"13","chd","CU","All",0.691377170224418
+"15","chd","UKPDS","All",0.654040173437419
