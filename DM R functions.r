@@ -90,50 +90,86 @@ FUN.approx <- function(mod, completedata) {
 }
 
 # Bootstrap Validation for the approximate model
+bootstrap <- function(){
+      library(rms)
+      library(Hmisc)
+      library(pec)
+      library(prodlim)
+      library(reshape2)
+      
+      # Bootstrap sampling
+      boostrap_sample <- completed[sample(1:nrow(completed),
+                                          nrow(completed),
+                                          replace = TRUE), ]
+      boostrap_fullmodel <- cph(fm, data=boostrap_sample,
+                                x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+      r <- FUN.approx(boostrap_fullmodel, boostrap_sample)
+      
+      # Select variables that makes up 90% of R2
+      cutoff <- max(which(r[[1]]>0.9))
+      term_remove <- paste0(r[[3]][1:cutoff], collapse = '|')
+      fm_terms <- terms(fm)
+      term_remove_index <- grep(term_remove, attr(fm_terms, 'term.labels'))
+      fm_approx <- drop.terms(fm_terms, term_remove_index, keep.response = TRUE)
+      
+      # Fit the approximate model
+      approx_model <- cph(fm_approx, data=boostrap_sample,
+                          x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+      
+      # Calculate the C-index
+      completed$pred <- predict(approx_model, newdata=completed)
+      score_result <- data.frame(pred=completed$pred,
+                                 years=completed$years,
+                                 event=completed$event)
+      c_index <- c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance)
+      return(c_index)
+}
 Cindex_approx <- function(number_bootstrap, formula = fm, data = completed){
       bootstrap <- function(){
+            library(rms)
+            library(Hmisc)
+            library(pec)
+            library(prodlim)
+            library(reshape2)
+            
             # Bootstrap sampling
-            boostrap_sample <- completed[sample(1:nrow(completed), 
-                                                nrow(completed), 
+            boostrap_sample <- completed[sample(1:nrow(completed),
+                                                nrow(completed),
                                                 replace = TRUE), ]
-            boostrap_fullmodel <- cph(fm, data=boostrap_sample, 
+            boostrap_fullmodel <- cph(fm, data=boostrap_sample,
                                       x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
             r <- FUN.approx(boostrap_fullmodel, boostrap_sample)
-            
+
             # Select variables that makes up 90% of R2
             cutoff <- max(which(r[[1]]>0.9))
             term_remove <- paste0(r[[3]][1:cutoff], collapse = '|')
             fm_terms <- terms(fm)
             term_remove_index <- grep(term_remove, attr(fm_terms, 'term.labels'))
             fm_approx <- drop.terms(fm_terms, term_remove_index, keep.response = TRUE)
-            
+
             # Fit the approximate model
             approx_model <- cph(fm_approx, data=boostrap_sample,
                                 x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
-            
+
             # Calculate the C-index
             completed$pred <- predict(approx_model, newdata=completed)
-            score_result <- data.frame(pred=completed$pred, 
-                                       years=completed$years, 
+            score_result <- data.frame(pred=completed$pred,
+                                       years=completed$years,
                                        event=completed$event)
             c_index <- c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance)
             return(c_index)
       }
       
       # Use doParallel to speed up the process ---------------------------
-      # no_cores <- detectCores() - 1  
-      # registerDoParallel(cores = no_cores)  
-      # cl <- makeCluster(no_cores, type="PSOCK") 
-      # c_index <- parLapply(cl, 1:number_bootstrap, bootstrap())  
-      # stopCluster(cl) 
+      no_cores <- detectCores() - 1
+      registerDoParallel(cores = no_cores)
+      cl <- makeCluster(no_cores, type="PSOCK")
+      clusterExport(cl, list("bootstrap","completed","fm","FUN.approx"))
+      c_index <- parLapply(cl, 1:number_bootstrap, function(x) bootstrap())
+      stopCluster(cl)
       
+      return(do.call(rbind,c_index))
 
-      # fm_terms <<- fm_terms
-      # fm_approx <<- fm_approx
-      # term_remove <<- term_remove
-      # approx_model <<- approx_model
-      # print(c_index)
-      c_index <- lapply(1:number_bootstrap, bootstrap())
 }
 
 
