@@ -48,48 +48,28 @@ plot(anova(fullmodel, tol=1e-13))
 
 **Model Validation**
 ```{r validation, warning = FALSE}
-c.stat <- FunDiscrimination(fullmodel, 3)
+c.stat <- Cindex_full(model = fullmodel, bootstrap = 4)
 ```
 
 **Model Calibration**
   
 ```{r calibration, warning = FALSE}
-# if we want to predict 10-year risk, change times=5 to times=10.
-completed$pred <- 1 - predictSurvProb(fullmodel, completed, times=5)
-# event after 5 years is setted to censored status? If so, run following code 
-# completed$event[completed$event == 1 & completed$years > 5] <- 0
-# table(completed$event)
-# if above annotation code is executed, c-statistics for each group is slightly larger.
-# predict 10 group's risk probabilities
-
-# predict survival probability and observed probability for overall
-dat <-FUN.deciles_mean_pred(completed)
-dat.melt <- melt(dat, id.vars = 'Deciles', variable.name = 'Group', value.name = 'Risk')
-plot_all_dots(dat.melt)
-
-cal.decile <- calibrate(fullmodel, u=5, B=3, cmethod="KM", m=(nrow(completed)/10))
-plot(cal.decile)
-
-dat.melt <- melt(cal.decile[,c(7,8)])
-names(dat.melt) <- c('Deciles','Group','Risk')
-dat.melt[,'Risk'] <- 1 - dat.melt[,'Risk']
-levels(dat.melt[,'Group']) <- c('pred','observed')
-dat.melt$Deciles <- 11 - dat.melt$Deciles
-plot_all_dots(dat.melt)
+Calibrate_full(model = fullmodel, bootstrap = 4)
 
 ```
 
 ```{r calibration_sex, warning = FALSE, eval = FALSE}
 # predict survival probability and observed probability for male group
+completed$pred <- 1 - predictSurvProb(fullmodel, completed, times=5)
 dat <- FUN.deciles_mean_pred(completed[completed$female == FALSE,])
 dat.melt <- melt(dat, id.vars = 'Deciles', variable.name = 'Group', value.name = 'Risk')
-p1 <- plot_all_dots(dat.melt)+
+p1 <- plot_cal_bar(dat.melt)+
             ggtitle("Male")
 
 # predict survival probability and observed probability for female group
 dat <- FUN.deciles_mean_pred(completed[completed$female == TRUE,])
 dat.melt <- melt(dat, id.vars = 'Deciles', variable.name = 'Group', value.name = 'Risk')
-p2 <- plot_all_dots(dat.melt, colours = c('pink', 'darkred'))+
+p2 <- plot_cal_bar(dat.melt, colours = c('pink', 'darkred'))+
             ggtitle("Female")
 
 multiplot(p1, p2, cols = 1)
@@ -116,25 +96,23 @@ anova(f.ia )
   Set at 90% of R^2^
 
 ```{r modelapprox, warning = FALSE, message = FALSE}
-# figure 2 - r^2 approximation
-r <- FUN.approx(fullmodel, completed)
-plot(r$r2, r$frac, type="b", ylab="Fraction", xlab=expression(r^2))
-tab <- cbind(number=(length(r[[2]])):1, frac=c(r[[1]]), predictor=r[[3]])
+approx <- FUN.approx(fullmodel, completed, fm = fm)
+plot(approx$r2, approx$frac, type = "b", ylab = "Fraction", xlab = expression(approx$r2))
+tab <- cbind(number = (length(approx$r2)):1, 
+             r2 = c(approx$r2), 
+             predictor = approx$predictor)
 tab
 # write.csv(tab, "table_r2.csv")
 
 # Validation for the approximate model
-c_index <- Cindex_approx(3, formula = fm, data = completed)
+boots_results <- valid_approx(3, fm = fm, completedata = completed)
 ```
+
 Mean c-index = `r round(mean(c_index), 4)`
 
 Approx model formula is: 
 ```{r}
-"formula(fm_approx)
-approx_model" # Should be derived from 'tab' above, not from bootstrap validation
-
-cutoff <- max(which(tab[,'frac']>0.9))
-tab[cutoff:nrow(tab),'predictor']
+approx$approx_model$sformula
 
 # save approx model
 # model <- fit.mult.impute(fm_approx, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
