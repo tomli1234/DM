@@ -66,6 +66,17 @@ completed$pred <- 1 - predictSurvProb(fullmodel, completed, times=5)
 dat <-FUN.deciles_mean_pred(completed)
 dat.melt <- melt(dat, id.vars = 'Deciles', variable.name = 'Group', value.name = 'Risk')
 plot_all_dots(dat.melt)
+
+cal.decile <- calibrate(fullmodel, u=5, B=3, cmethod="KM", m=(nrow(completed)/10))
+plot(cal.decile)
+
+dat.melt <- melt(cal.decile[,c(7,8)])
+names(dat.melt) <- c('Deciles','Group','Risk')
+dat.melt[,'Risk'] <- 1 - dat.melt[,'Risk']
+levels(dat.melt[,'Group']) <- c('pred','observed')
+dat.melt$Deciles <- 11 - dat.melt$Deciles
+plot_all_dots(dat.melt)
+
 ```
 
 ```{r calibration_sex, warning = FALSE, eval = FALSE}
