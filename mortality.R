@@ -2,6 +2,8 @@
 load("E:/vfm/mortality_t2_5.Rdata"); folder <- "Mortality/t2 dm"
 # load("E:/vfm/mortality_20170320_5.Rdata"); folder <- "Mortality/all dm"
 
+library(rms)
+
 d$event <- as.numeric(d$event)-1
 # Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.
 d$years <- d$time / 365.25
