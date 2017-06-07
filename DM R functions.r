@@ -224,6 +224,23 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL){
 }
 
 
+plot_all_bars <- function(dat.melt, colours = c('skyblue1','darkblue')){
+  ggplot(dat.melt, aes(x = Deciles, y = Risk*100, fill = Group)) + 
+    geom_bar(stat="identity", position=position_dodge(), color = "black") +
+    scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
+    theme_minimal() + xlab("Tenth of predicted risk") + 
+    ylab("5 year risk (%)") + 
+    theme(axis.title.x = element_text(size=14), 
+          axis.title.y = element_text(size=14), 
+          axis.text.y = element_text(size=12)) + 
+    scale_x_continuous(breaks = NULL) + 
+    scale_y_continuous(breaks=seq(0, 100, 10)) + 
+    scale_color_manual(values = c("observed" = colours[1],'pred' = colours[2]),
+                       labels=c("observed" = 'Observed','pred' = 'Predicted')) +
+    theme(legend.position="bottom", 
+          legend.title=element_blank(), 
+          legend.text = element_text(size = 12, face = "bold"))
+}
 
 
 
