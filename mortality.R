@@ -1,12 +1,13 @@
 # Mortality
-load("E:/vfm/mortality_t2_5.Rdata"); folder <- "Mortality/t2 dm"
-# load("E:/vfm/mortality_20170320_5.Rdata"); folder <- "Mortality/all dm"
+load("E:/vfm/mortality_no-insulin_5.Rdata"); folder <- "Mortality/no insulin_5"
+# load("E:/vfm/mortality_t2_5.Rdata"); folder <- "Mortality/t2 dm"
+load("E:/vfm/mortality_20170320_5.Rdata"); folder <- "Mortality/all dm"
 
 library(rms)
 
 d$event <- as.numeric(d$event)-1
 # Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.
-d$years <- d$time / 365.25
+d$years <- as.numeric(d$time / 365.25)
 units(d$years) <- "year"; label(d$years) <- "Survival Time"
 
 fm <- as.formula(Surv(years, event) ~ rcs(age, 4) + rcs(duration, 4) + rcs(log.urine_acr, 4) + rcs(bmi, 4) + rcs(haemoglobin, 4) + rcs(wbc, 4) + rcs(pulse, 4) + rcs(lr, 4) + rcs(hba1c, 4) + rcs(log.creatinine, 4) + rcs(map, 4) + rcs(triglyceride, 4) + smoking + af + cancer + pad + ckd + meds + complications + female + chd + stroke + rcs(sbp, 4) + rcs(dbp, 4) + rcs(ldl, 4) + rcs(hdl, 4) + rcs(tc, 4) + rcs(log.egfr_chinese, 4))
