@@ -2,13 +2,6 @@
 # Using HKU data
 # Tom Li, tomli123@hku.hk, 21 Mar 2017
 library(rms); library(Hmisc); library(ggplot2); library(survival); library(dplyr)
-# rm(list=ls())
-# 
-# setwd("C:\\Users\\tomli\\Desktop\\Tom folder\\Chao\\Chao - 29Sep2016\\External validation\\CU")
-# 
-# wd_mortality <- "mortality_full_8.Rdata" # Mortality data
-# wd_stroke <- "stroke_20170214.Rdata" # Stroke data
-# wd_chd <- "chd_20170220.Rdata" # CHD data
 
 # Data--------------------------------------------------------------------------------------------
 data_manipulation <- function(d, imp) {
@@ -134,7 +127,7 @@ plot_cal_bar <- function(dat.melt, colours = c('skyblue1','darkblue')){
       
 }
 
-validation <- function(outcome, CU_UKPDS, sex) {
+external_validation <- function(outcome, CU_UKPDS, sex) {
       
       # Select CU/UKPDS model
       if(CU_UKPDS == 'CU') {
@@ -182,34 +175,6 @@ validation <- function(outcome, CU_UKPDS, sex) {
       
       return(list(c_index = c_index, figure = p))
 }
-
-# # Output------------------------------------------------------------------
-# # outcome: 'chd', 'mortality', 'stroke'
-# # CU_UKPDS: 'CU', 'UKPDS'
-# # sex: 'Female', 'Male', 'All' 
-# validation(outcome = 'mortality', CU_UKPDS = 'CU', sex = 'Male')$figure
-# validation(outcome = 'stroke', CU_UKPDS = 'CU', sex = 'Male')$figure
-# validation(outcome = 'chd', CU_UKPDS = 'CU', sex = 'Male')$figure
-# validation(outcome = 'stroke', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
-# validation(outcome = 'chd', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
-# 
-# # Table of c index
-# c_index_all <- expand.grid(outcome = c('mortality','stroke','chd'), 
-#                            CU_UKPDS = c('CU','UKPDS'), 
-#                            sex = c('Male','Female','All')) %>%
-#       
-#                   filter(! (outcome == 'mortality' & CU_UKPDS == 'UKPDS')) %>%
-#       
-#                   mutate(c_index = apply(., 1, function(x) validation(x[1],x[2],x[3])$c_index))
-# 
-# # write.csv(c_index_all, 'c_index_all.csv')
-# 
-# c_index_all %>%
-#       ggplot(aes(x = outcome, y = c_index, fill = CU_UKPDS)) +
-#             geom_bar(stat= 'identity', position = 'dodge', width = 0.5) +
-#             facet_grid(. ~ sex)
-# 
-# # ggsave("c_index_all.pdf")
 
 
 
