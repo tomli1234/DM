@@ -125,8 +125,8 @@ valid_approx <- function(number_bootstrap, fm = fm, completedata = completed){
       boots_results <- parLapply(cl, 1:number_bootstrap, function(x) bootstrap())
       stopCluster(cl)
       
-      mean_train_C <- mean(sapply(boots_results, function(x) x[['train_c_index']]))
-      mean_test_C <- mean(sapply(boots_results, function(x) x[['test_c_index']]))
+      mean_train_C <- sapply(boots_results, function(x) x[['train_c_index']])
+      mean_test_C <- sapply(boots_results, function(x) x[['test_c_index']])
       mean_train_d <- apply(sapply(boots_results, function(x) x[['train_d']]), 1, mean)
       mean_test_d <- apply(sapply(boots_results, function(x) x[['test_d']]), 1, mean)
       

@@ -109,6 +109,7 @@ boots_results <- valid_approx(5, fm = fm, completedata = completed) # Should be 
 
       # Discrimination
 c_index <- boots_results$validation
+c_index_CI <- quantile(c_index, c(0.025, 0.975))
 
       # Calibration
 p1 <- plot_cal_bar(boots_results$calibration)
