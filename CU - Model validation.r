@@ -114,6 +114,26 @@ FUN.deciles_mean_pred <- function(data) {
       data.frame(observed, pred = mean_pred, Deciles=1:10)
 }
 
+plot_cal_bar <- function(dat.melt, colours = c('skyblue1','darkblue')){
+      ggplot(dat.melt, aes(x = factor(Deciles), y = Risk*100, fill = Group)) + 
+            geom_bar(stat = 'identity', position = 'dodge', width = 0.7) +  
+            xlab("Tenth of predicted risk") + 
+            ylab("5 year risk (%)") + 
+            theme_classic()+
+            theme(axis.title.x = element_text(size=14), 
+                  axis.title.y = element_text(size=14), 
+                  axis.text.y = element_text(size=12)) + 
+            scale_x_discrete() + 
+            scale_y_continuous(breaks=seq(0, 100, 10)) + 
+            scale_fill_manual(values = c("observed" = colours[1],'pred' = colours[2]),
+                              labels=c("observed" = 'Observed','pred' = 'Predicted')) +
+            theme(legend.position="bottom", 
+                  legend.title=element_blank(), 
+                  legend.text = element_text(size = 12, face = "bold"),
+                  panel.grid.major.y = element_line( size=.1, color="grey"))
+      
+}
+
 validation <- function(outcome, CU_UKPDS, sex) {
       
       # Select CU/UKPDS model
@@ -158,22 +178,7 @@ validation <- function(outcome, CU_UKPDS, sex) {
       library(reshape2)
       dat.melt <- melt(dat, id.vars = 'Deciles', variable.name = 'Group', value.name = 'Risk')
       
-      p <- ggplot(dat.melt, aes(x = Deciles, y = Risk*100, color = Group)) + 
-      		geom_point(size = 4) +  xlab("Tenth of predicted risk") + 
-      		ylab("5 year risk (%)") + 
-      		theme(axis.title.x = element_text(size=14), 
-      			axis.title.y = element_text(size=14), 
-      			axis.text.y = element_text(size=12)) + 
-      		scale_x_continuous(breaks = NULL) + 
-      		scale_y_continuous(breaks=seq(0, 100, 10)) + 
-      		scale_color_manual(values = c("observed" = 'skyblue1','pred' = 'darkblue'), 
-      			labels=c("observed" = 'Observed','pred' = 'Predicted')) + 
-      		theme(legend.position="bottom", 
-      			legend.title=element_blank(), 
-      			legend.text = element_text(size = 12, face = "bold")) +
-      		annotate("text",3,100*max(dat.melt$Risk),size=8,
-      			label=paste0("C-statistic: ",round(c_index,3))) +
-                  ggtitle(paste0(outcome, ', ', CU_UKPDS))
+		p <- plot_cal_bar(dat.melt)
       
       return(list(c_index = c_index, figure = p))
 }
@@ -197,14 +202,14 @@ c_index_all <- expand.grid(outcome = c('mortality','stroke','chd'),
       
                   mutate(c_index = apply(., 1, function(x) validation(x[1],x[2],x[3])$c_index))
 
-write.csv(c_index_all, 'c_index_all.csv')
+# write.csv(c_index_all, 'c_index_all.csv')
 
 c_index_all %>%
       ggplot(aes(x = outcome, y = c_index, fill = CU_UKPDS)) +
             geom_bar(stat= 'identity', position = 'dodge', width = 0.5) +
             facet_grid(. ~ sex)
 
-ggsave("c_index_all.pdf")
+# ggsave("c_index_all.pdf")
 
 
 
