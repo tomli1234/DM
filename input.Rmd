@@ -130,3 +130,41 @@ approx$approx_model$sformula
 ```
 
 
+**External validation**
+```{r modelapprox, warning = FALSE, message = FALSE}
+
+source('C:/Users/tomli/Desktop/DM/External validation.r')
+
+path <- "C:\\Users\\tomli\\Desktop\\Tom folder\\Chao\\Chao - 29Sep2016\\External validation\\CU"
+wd_mortality <- paste0(path, "\\mortality_full_8.Rdata") # Mortality data
+wd_stroke <- paste0(path, "\\stroke_20170214.Rdata") # Stroke data
+wd_chd <- paste0(path, "\\chd_20170220.Rdata") # CHD data
+
+# outcome: 'chd', 'mortality', 'stroke'
+# CU_UKPDS: 'CU', 'UKPDS'
+# sex: 'Female', 'Male', 'All' 
+validation(outcome = 'mortality', CU_UKPDS = 'CU', sex = 'Male')$figure
+validation(outcome = 'stroke', CU_UKPDS = 'CU', sex = 'Male')$figure
+validation(outcome = 'chd', CU_UKPDS = 'CU', sex = 'Male')$figure
+validation(outcome = 'stroke', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
+validation(outcome = 'chd', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
+
+# Table of c index
+c_index_all <- expand.grid(outcome = c('mortality','stroke','chd'), 
+                           CU_UKPDS = c('CU','UKPDS'), 
+                           sex = c('Male','Female','All')) %>%
+      
+                  filter(! (outcome == 'mortality' & CU_UKPDS == 'UKPDS')) %>%
+      
+                  mutate(c_index = apply(., 1, function(x) validation(x[1],x[2],x[3])$c_index))
+
+
+c_index_all %>%
+      ggplot(aes(x = outcome, y = c_index, fill = CU_UKPDS)) +
+            geom_bar(stat= 'identity', position = 'dodge', width = 0.5) +
+            facet_grid(. ~ sex)
+
+
+```
+
+
