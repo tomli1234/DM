@@ -48,7 +48,7 @@ Calibrate_full <- function (model, bootstrap) {
       dat.melt[,'Risk'] <- 1 - dat.melt[,'Risk']
       levels(dat.melt[,'Group']) <- c('pred','observed')
       dat.melt$Deciles <- 11 - dat.melt$Deciles
-      p <- plot_cal_bar(dat.melt) 
+      p <- plot_cal_bar(dat.melt, colours) 
       return(p)
 }
 
@@ -162,23 +162,23 @@ plot_cal_dots <- function(dat.melt, colours = c('skyblue1','darkblue')){
                   legend.text = element_text(size = 12, face = "bold"))
 }
 
-plot_cal_bar <- function(dat.melt, colours = c('skyblue1','darkblue')){
-      ggplot(dat.melt, aes(x = factor(Deciles), y = Risk*100, fill = Group)) + 
-            geom_bar(stat = 'identity', position = 'dodge', width = 0.7) +  
-            xlab("Tenth of predicted risk") + 
-            ylab("5 year risk (%)") + 
-            theme_classic()+
-            theme(axis.title.x = element_text(size=14), 
-                  axis.title.y = element_text(size=14), 
-                  axis.text.y = element_text(size=12)) + 
-            scale_x_discrete() + 
-            scale_y_continuous(breaks=seq(0, 100, 10)) + 
-            scale_fill_manual(values = c("observed" = colours[1],'pred' = colours[2]),
-                              labels=c("observed" = 'Observed','pred' = 'Predicted')) +
-            theme(legend.position="bottom", 
-                  legend.title=element_blank(), 
-                  legend.text = element_text(size = 12, face = "bold"),
-                  panel.grid.major.y = element_line( size=.1, color="grey"))
+plot_cal_bar <- function(dat.melt, colours){
+  ggplot(dat.melt, aes(x = Deciles, y = Risk*100, fill = factor(Group, levels = c("pred", "observed")))) + 
+    geom_bar(stat = 'identity', position = 'dodge', width = 0.7, color = "black") +  
+    xlab("Tenth of predicted risk") + 
+    ylab("5 year risk (%)") + 
+    theme(axis.title.x = element_text(size=14), 
+          axis.title.y = element_text(size=14), 
+          axis.text.y = element_text(size=12)) + 
+    scale_x_discrete() + 
+    scale_y_continuous(breaks=seq(0, 100, 10)) + 
+    scale_fill_manual(values = c('pred' = colours[1], "observed" = colours[2]),
+                      labels=c("observed" = 'Observed','pred' = 'Predicted')) +
+    theme_minimal() + 
+    theme(legend.position="bottom", 
+          legend.title=element_blank(), 
+          legend.text = element_text(size = 12, face = "bold"),
+          panel.grid.major.y = element_line( size=.1, color="grey"))
       
 }
 
@@ -222,26 +222,4 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL){
             }
       }
 }
-
-
-plot_all_bars <- function(dat.melt, colours = c('skyblue1','darkblue')){
-  ggplot(dat.melt, aes(x = Deciles, y = Risk*100, fill = Group)) + 
-    geom_bar(stat="identity", position=position_dodge(), color = "black") +
-    scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
-    theme_minimal() + xlab("Tenth of predicted risk") + 
-    ylab("5 year risk (%)") + 
-    theme(axis.title.x = element_text(size=14), 
-          axis.title.y = element_text(size=14), 
-          axis.text.y = element_text(size=12)) + 
-    scale_x_continuous(breaks = NULL) + 
-    scale_y_continuous(breaks=seq(0, 100, 10)) + 
-    scale_color_manual(values = c("observed" = colours[1],'pred' = colours[2]),
-                       labels=c("observed" = 'Observed','pred' = 'Predicted')) +
-    theme(legend.position="bottom", 
-          legend.title=element_blank(), 
-          legend.text = element_text(size = 12, face = "bold"))
-}
-
-
-
 
