@@ -17,9 +17,10 @@ library(Hmisc)
 library(pec)
 library(prodlim)
 library(reshape2)
-
 # load the commonly used functions
-source('C:/Users/tomli/Desktop/DM/DM R functions.r')
+# source('C:/Users/tomli/Desktop/DM/DM R functions.r')
+source('C:/Users/Chao/Documents/GitHub/DM/DM R functions.r')
+colours <- c('skyblue1','darkblue')
 ```
 
 **Bootstrap = 3**
@@ -48,13 +49,13 @@ plot(anova(fullmodel, tol=1e-13))
 
 **Model Validation**
 ```{r validation, warning = FALSE}
-c.stat <- Cindex_full(model = fullmodel, bootstrap = 4) # Should be 100
+c.stat <- Cindex_full(model = fullmodel, bootstrap = 3) # Should be 100
 ```
 
 **Model Calibration**
   
 ```{r calibration, warning = FALSE}
-Calibrate_full(model = fullmodel, bootstrap = 4) # Should be 100
+Calibrate_full(model = fullmodel, bootstrap = 3) # Should be 100
 
 ```
 
@@ -77,7 +78,7 @@ Calibrate_full(model = fullmodel, bootstrap = 4) # Should be 100
 
 #### (2) Age interaction 
 **Age interaction**
-``` {r age interaction, eval = TRUE}
+``` {r age interaction, eval = FALSE}
 z <- predict(fullmodel, type="terms")
 z.age <- z[, "age"]
 z.other <- subset(z, select=-age)
@@ -105,14 +106,14 @@ tab
 # write.csv(tab, "table_r2.csv")
 
 # Validation for the approximate model
-boots_results <- valid_approx(5, fm = fm, completedata = completed) # Should be 100
+boots_results <- valid_approx(3, fm = fm, completedata = completed) # Should be 100
 
       # Discrimination
 c_index <- boots_results$validation
-c_index_CI <- quantile(c_index, c(0.025, 0.975))
+c_index_CI <- quantile(c_index, c(0.025, 0.5, 0.975))
 
       # Calibration
-p1 <- plot_cal_bar(boots_results$calibration)
+p1 <- plot_cal_bar(boots_results$calibration, colours)
 p1
 ```
 
@@ -124,48 +125,11 @@ approx$approx_model$sformula
 
 # save approx model
 # model <- fit.mult.impute(fm_approx, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+
+save(list=c("boots_results", "c.stat", "approx", "fullmodel"), file = paste0( folder, filename, ".RData"))
+
 ```
 
 ```{r, ref.label='calibration', warning = FALSE}
 ```
-
-
-**External validation**
-```{r modelapprox, warning = FALSE, message = FALSE}
-
-source('C:/Users/tomli/Desktop/DM/External validation.r')
-
-path <- "C:\\Users\\tomli\\Desktop\\Tom folder\\Chao\\Chao - 29Sep2016\\External validation\\CU"
-wd_mortality <- paste0(path, "\\mortality_full_8.Rdata") # Mortality data
-wd_stroke <- paste0(path, "\\stroke_20170214.Rdata") # Stroke data
-wd_chd <- paste0(path, "\\chd_20170220.Rdata") # CHD data
-
-# outcome: 'chd', 'mortality', 'stroke'
-# CU_UKPDS: 'CU', 'UKPDS'
-# sex: 'Female', 'Male', 'All' 
-external_validation(outcome = 'mortality', CU_UKPDS = 'CU', sex = 'Male')$figure
-external_validation(outcome = 'stroke', CU_UKPDS = 'CU', sex = 'Male')$figure
-external_validation(outcome = 'chd', CU_UKPDS = 'CU', sex = 'Male')$figure
-external_validation(outcome = 'stroke', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
-external_validation(outcome = 'chd', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
-
-# Table of c index
-c_index_all <- expand.grid(outcome = c('mortality','stroke','chd'), 
-                           CU_UKPDS = c('CU','UKPDS'), 
-                           sex = c('Male','Female','All')) %>%
-      
-                  filter(! (outcome == 'mortality' & CU_UKPDS == 'UKPDS')) %>%
-      
-                  mutate(c_index = apply(., 1, function(x)
-                        external_validation(x[1],x[2],x[3])$c_index))
-
-
-c_index_all %>%
-      ggplot(aes(x = outcome, y = c_index, fill = CU_UKPDS)) +
-            geom_bar(stat= 'identity', position = 'dodge', width = 0.5) +
-            facet_grid(. ~ sex)
-
-
-```
-
 
