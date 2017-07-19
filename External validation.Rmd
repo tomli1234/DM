@@ -1,0 +1,53 @@
+---
+title: "external validation"
+author: "Chao"
+date: "8 June 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**External validation**
+```{r modelapprox, warning = FALSE, message = FALSE}
+
+source('C:/Users/tomli/Desktop/DM/External validation.r')
+source('C:/Users/Chao/Documents/GitHub/DM/External validation.r')
+
+path <- "C:\\Users\\tomli\\Desktop\\Tom folder\\Chao\\Chao - 29Sep2016\\External validation\\CU"
+path <- "E:"
+wd_mortality <- "vfm/mortality_20170320_5.Rdata" # Mortality data
+#wd_mortality <- "mortality_t2_5.Rdata" # Mortality data
+wd_stroke <- "vfm/stroke_20170320_5.Rdata" # Stroke data
+#wd_stroke <- "stroke_t2_3.Rdata" # Stroke data
+wd_chd <- "chd_20170320_5.Rdata" # CHD data
+#wd_chd <- "chd_t2_5.Rdata" # CHD data
+
+# outcome: 'chd', 'mortality', 'stroke'
+# CU_UKPDS: 'CU', 'UKPDS'
+# sex: 'Female', 'Male', 'All' 
+external_validation(outcome = 'mortality', CU_UKPDS = 'CU', sex = 'Male')$figure
+external_validation(outcome = 'stroke', CU_UKPDS = 'CU', sex = 'Male')$figure
+external_validation(outcome = 'chd', CU_UKPDS = 'CU', sex = 'Male')$figure
+external_validation(outcome = 'stroke', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
+external_validation(outcome = 'chd', CU_UKPDS = 'UKPDS', sex = 'Male')$figure
+
+# Table of c index
+c_index_all <- expand.grid(outcome = c('mortality','stroke','chd'), 
+                           CU_UKPDS = c('CU','UKPDS'), 
+                           sex = c('Male','Female','All')) %>%
+      
+                  filter(! (outcome == 'mortality' & CU_UKPDS == 'UKPDS')) %>%
+      
+                  mutate(c_index = apply(., 1, function(x)
+                        external_validation(x[1],x[2],x[3])$c_index))
+
+
+c_index_all %>%
+      ggplot(aes(x = outcome, y = c_index, fill = CU_UKPDS)) +
+            geom_bar(stat= 'identity', position = 'dodge', width = 0.5) +
+            facet_grid(. ~ sex)
+
+
+```
