@@ -8,3 +8,239 @@ library(reshape2)#
 #----------------------------------------------#
 # Model for stroke#
 #-----------------------------------------------
+load("/Users/chao/Documents/Windows/mortality_20170320_5.Rdata")
+ls()
+d<-d[1:1000,]
+d$event <- as.numeric(d$event)#
+d$event <- d$event-1#
+# Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.#
+d$years <- d$time / 365.25#
+units(d$years) <- "year"#
+label(d$years) <- "Survival Time"#
+#
+# Model development #
+# imputing missing data#
+completed <- d#
+imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) #
+completed[names(imputed)] <- imputed#
+dd <<- datadist(completed); options(datadist ="dd")#
+nk <- 4#
+vars <- gsub("nk", nk, vars)#
+fm <- as.formula(paste("Surv(years, event) ~", vars))#
+fullmodel <- fit.mult.impute(fm, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+vars <- c("rcs(age, nk) + rcs(duration, nk) + rcs(log.urine_acr, nk) + rcs(bmi, nk) + rcs(haemoglobin, nk) + rcs(wbc, nk) + rcs(pulse, nk) + rcs(lr, nk) + rcs(hba1c, nk) + rcs(log.creatinine, nk) + rcs(map, nk) + rcs(triglyceride, nk) + smoking + af + cancer + pad + ckd + meds + complications + female + chd + rcs(sbp, nk) + rcs(dbp, nk) + rcs(ldl, nk) + rcs(hdl, nk) + rcs(tc, nk) + rcs(log.egfr_chinese, nk)")
+d$event <- as.numeric(d$event)#
+d$event <- d$event-1#
+# Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.#
+d$years <- d$time / 365.25#
+units(d$years) <- "year"#
+label(d$years) <- "Survival Time"#
+#
+# Model development #
+# imputing missing data#
+completed <- d#
+imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) #
+completed[names(imputed)] <- imputed#
+dd <<- datadist(completed); options(datadist ="dd")#
+nk <- 4#
+vars <- gsub("nk", nk, vars)#
+fm <- as.formula(paste("Surv(years, event) ~", vars))#
+fullmodel <- fit.mult.impute(fm, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+load("/Users/chao/Documents/Windows/mortality_20170320_5.Rdata")
+d<-d[1:10000,]
+d$event <- as.numeric(d$event)#
+d$event <- d$event-1#
+# Since d$event has two status, i.e. 1 (censored indication) and 2 (event indication), transform it to 0 and 1 status as usual.#
+d$years <- d$time / 365.25#
+units(d$years) <- "year"#
+label(d$years) <- "Survival Time"#
+#
+# Model development #
+# imputing missing data#
+completed <- d#
+imputed <- impute.transcan(imp, imputation=1, data=d, list.out=TRUE, pr=FALSE, check=FALSE) #
+completed[names(imputed)] <- imputed#
+dd <<- datadist(completed); options(datadist ="dd")#
+nk <- 4#
+vars <- gsub("nk", nk, vars)#
+fm <- as.formula(paste("Surv(years, event) ~", vars))#
+fullmodel <- fit.mult.impute(fm, fitter = cph, xtrans = imp, data = d, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+ggplot(Predict(fullmodel), sepdiscrete ='vertical', nlevels=4, vnames ='names')#
+# estimation result#
+fullmodel#
+# figure 1 - importance of each variable#
+# anova(fullmodel)#
+plot(anova(fullmodel, tol=1e-13))
+FunDiscrimination <- function (model, bootstrap) {#
+  set.seed (10)#
+  v <- validate (model, B=bootstrap)#
+  print(v)#
+  Dxy = v[rownames(v)=="Dxy", colnames(v)=="index.corrected"]#
+  c.stat <- Dxy/2+0.5#
+  print(paste("C-statistic =", round(c.stat, 4)))#
+  c.stat#
+}#
+c.stat <- FunDiscrimination(fullmodel, 3)
+mod<-fullmodel
+lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)#
+  s <- fastbw(a, aic=1000000)
+completedata<-completed
+lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)#
+  s <- fastbw(a, aic=1000000)
+s
+?fastbw
+lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)#
+  s <- fastbw(a, "p")
+s
+lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)#
+  s <- fastbw(a, type="p")
+lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)#
+  s <- fastbw(a, rule="p")
+s
+s
+lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)#
+  s <- fastbw(a, rule="aic")
+s
+lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)
+betas <- s$Coefficients
+s <- fastbw(a, aic=1000000)
+betas <- s$Coefficients
+s
+s <- fastbw(a, aic=1000000)#
+  betas <- s$Coefficients#
+  X <- model.matrix(fm, data=completedata)#
+  ap <- X %*% t(betas)#
+  m <- ncol(ap) - 1#
+  fullchisq <- mod$stats[3]#
+  r2 <- frac <- numeric(m)
+r2
+for(i in 1:m) {#
+    lpa <- ap[,i]#
+    r2[i] <- cor(lpa, lp)^2#
+    fapprox <- cph(Surv(years, event) ~ lpa, data=completedata, x=TRUE, y=TRUE)#
+    frac[i] <- fapprox$stats[3]/fullchisq#
+  }
+list(r2=c(1, r2), frac=c(1, frac), predictor=row.names(s[[1]]))
+tab <- cbind(number=(length(r[[2]])):1, frac=c(r[[1]]),  predictor=r[[3]])
+r<-list(r2=c(1, r2), frac=c(1, frac), predictor=row.names(s[[1]]))
+tab <- cbind(number=(length(r[[2]])):1, frac=c(r[[1]]),  predictor=r[[3]])
+tab
+str(anova)
+str(anova(fullmodel))
+str(anova(fullmodel))
+(anova(fullmodel))
+fullmodel$formula
+plot(anova(fullmodel))
+str(plot(anova(fullmodel)))
+anova_model<-data.frame(plot(anova(fullmodel)))
+anova_model
+anova_model<-(plot(anova(fullmodel)))[1]
+anova_model
+anova_model<-(plot(anova(fullmodel)))[1:5]
+anova_model
+names(anova_model)
+# anova_fm <- names(plot(anova(mod)))
+names(plot(anova(mod)))
+names(plot(anova(mod)))
+anova_fm <- names(plot(anova(mod)))[1:5]
+anova_fm
+terms(anova_fm)
+term_remove_index <- grep(anova_terms, attr(fm_terms, 'term.labels'))
+fm_terms <- terms(fm)
+fm_terms
+term_remove_index <- grep(anova_terms, attr(fm_terms, 'term.labels'))
+anova_terms <- names(plot(anova(mod)))[1:5]
+term_remove_index <- grep(anova_terms, attr(fm_terms, 'term.labels'))
+fm_terms
+anova(terms)
+anova_terms
+fm_terms
+anova_terms
+approx_model <- cph(as.formula(paste("Surv(years, event) ~", "rcs(age, 4) + rcs(duration, 4) + meds + rcs(log.urine_acr, 4) + af", data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+approx_model <- cph(as.formula(paste("Surv(years, event) ~", "rcs(age, 4) + rcs(duration, 4) + meds + rcs(log.urine_acr, 4) + af")), data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)
+# Validation for the approximate model#
+Cindex_approx <- function(number_bootstrap){#
+  c_index <- NULL#
+  for(i in 1:number_bootstrap){#
+    # Bootstrap sampling#
+    boostrap_sample <- completed[sample(1:nrow(completed), nrow(completed), replace = TRUE), ]#
+    boostrap_fullmodel <- cph(fm, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+    r <- FUN.approx(boostrap_fullmodel, boostrap_sample)#
+  # Fit the approximate model#
+  anova_terms <- names(plot(anova(mod)))[1:5]#
+approx_model <- cph(as.formula(paste("Surv(years, event) ~", "rcs(age, 4) + rcs(duration, 4) + meds + rcs(log.urine_acr, 4) + af")), data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+  approx_model <- cph(fm_approx, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+    # Calculate the C-index#
+    completed$pred <- predict(approx_model, newdata=completed)#
+    score_result <- data.frame(pred=completed$pred, years=completed$years, event=completed$event)#
+    c_index <- c(c_index, c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance))#
+  }#
+  print(c_index)#
+  c_index#
+}#
+c_index <- Cindex_approx(3)
+FUN.approx <- function(mod, completedata) {#
+  lp <- predict(mod)#
+  a <- ols(as.formula(paste0("lp ~ ", paste0(vars, collapse=""))), sigma=1, data=completedata)#
+  s <- fastbw(a, aic=1000000)#
+  betas <- s$Coefficients#
+  X <- model.matrix(fm, data=completedata)#
+  ap <- X %*% t(betas)#
+  m <- ncol(ap) - 1#
+  fullchisq <- mod$stats[3]#
+  r2 <- frac <- numeric(m)#
+  for(i in 1:m) {#
+    lpa <- ap[,i]#
+    r2[i] <- cor(lpa, lp)^2#
+    fapprox <- cph(Surv(years, event) ~ lpa, data=completedata, x=TRUE, y=TRUE)#
+    frac[i] <- fapprox$stats[3]/fullchisq#
+  }#
+  list(r2=c(1, r2), frac=c(1, frac), predictor=row.names(s[[1]]))#
+}
+Cindex_approx <- function(number_bootstrap){#
+  c_index <- NULL#
+  for(i in 1:number_bootstrap){#
+    # Bootstrap sampling#
+    boostrap_sample <- completed[sample(1:nrow(completed), nrow(completed), replace = TRUE), ]#
+    boostrap_fullmodel <- cph(fm, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+    r <- FUN.approx(boostrap_fullmodel, boostrap_sample)#
+  # Fit the approximate model#
+  anova_terms <- names(plot(anova(mod)))[1:5]#
+approx_model <- cph(as.formula(paste("Surv(years, event) ~", "rcs(age, 4) + rcs(duration, 4) + meds + rcs(log.urine_acr, 4) + af")), data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+  approx_model <- cph(fm_approx, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+    # Calculate the C-index#
+    completed$pred <- predict(approx_model, newdata=completed)#
+    score_result <- data.frame(pred=completed$pred, years=completed$years, event=completed$event)#
+    c_index <- c(c_index, c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance))#
+  }#
+  print(c_index)#
+  c_index#
+}#
+c_index <- Cindex_approx(3)
+# Validation for the approximate model#
+Cindex_approx <- function(number_bootstrap){#
+  c_index <- NULL#
+  for(i in 1:number_bootstrap){#
+    # Bootstrap sampling#
+    boostrap_sample <- completed[sample(1:nrow(completed), nrow(completed), replace = TRUE), ]#
+    boostrap_fullmodel <- cph(fm, data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+    r <- FUN.approx(boostrap_fullmodel, boostrap_sample)#
+  # Fit the approximate model#
+  anova_terms <- names(plot(anova(mod)))[1:5]#
+approx_model <- cph(as.formula(paste("Surv(years, event) ~", "rcs(age, 4) + rcs(duration, 4) + meds + rcs(log.urine_acr, 4) + af")), data=boostrap_sample, x=TRUE, y=TRUE, surv=TRUE, time.inc=5)#
+    # Calculate the C-index#
+    completed$pred <- predict(approx_model, newdata=completed)#
+    score_result <- data.frame(pred=completed$pred, years=completed$years, event=completed$event)#
+    c_index <- c(c_index, c(survConcordance(Surv(years, event) ~ pred, score_result)$concordance))#
+  }#
+  print(c_index)#
+  c_index#
+}#
+c_index <- Cindex_approx(3)
